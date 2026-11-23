@@ -152,3 +152,27 @@ classDiagram
     Container --> Container : _parent (0..1)
     TextFactory *-- Root : owns _root
     TextFactory --> Container : tracks _current
+---
+
+## Практичне заняття 4. Практика SOLID
+
+### Архітектура та дотримання принципів SOLID
+Для взаємодії з системами `Characters` та `Text` реалізовано динамічний консольний інтерфейс (`cli/`), побудований за принципами SOLID:
+
+- **SRP (Single Responsibility Principle):** парсинг аргументів і опцій винесено в `cli/parser.py` (`CommandParser`), диспетчеризацію та цикл виконання — у `cli/engine.py` (`CommandRegistry`, `CLIApp`), а логіку конкретних команд — в окремі модулі `cli/characters_commands.py` та `cli/text_commands.py`.
+- **OCP (Open/Closed Principle):** нові команди додаються через `CommandRegistry.add_command(selector, handler)` без зміни ядра `CLIApp`. У `TextFactory` використано `TextType(Enum)` для розширення типів елементів без зміни інтерфейсу.
+- **LSP (Liskov Substitution Principle):** елементи документа (`Root`, `Heading`, `Paragraph`) взаємозамінні через спільний абстрактний контракт `TextElement.render(show_id=...)`.
+- **ISP (Interface Segregation Principle):** інтерфейси команд розділені за режимами (`--text` та `--chars`), кожна підсистема реєструє лише свої команди.
+- **DIP (Dependency Inversion Principle):** `CLIApp` залежить від абстрактного реєстру обробників (`CommandHandler`), а не від конкретних класів `Game` чи `TextFactory`.
+
+### Запуск CLI
+```bash
+python main.py --text   # режим роботи з системою Text
+python main.py --chars  # режим роботи з системою Characters
+python main.py          # інтерактивний вибір режиму
+```
+
+### Підтримувані команди
+Characters: create <char|item|ability>, add --char_id <id/name> --id <id/name>, act <attack|heal|ability> <actor> <target> [--id <id/name>], ls <char|item|ability> [--id <id/name>], help, exit.
+
+Text: pwd, print [--whole] [--id], add <container|leaf> <type>, rm [<elem_name>], up, cd <path> | --id <container_id>, help, exit.
