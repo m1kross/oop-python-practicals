@@ -1,48 +1,44 @@
-"""Entry point demonstrating the refactored game system."""
+"""Main entry point for Practical 4 (SOLID CLI)."""
 
-from ability import Ability
-from character import Character
-from game import Game
-from logger import Logger
+import sys
+
+from cli.characters_commands import CharactersContext, register_characters_commands
+from cli.engine import CLIApp, CommandRegistry
+from cli.parser import CommandParser
+from cli.text_commands import register_text_commands
+from text_system.factory import TextFactory
+
+
+def choose_mode(options: dict[str, str | bool]) -> str:
+    """Resolve CLI mode from startup flags or interactive dialog."""
+    if "text" in options or "t" in options:
+        return "text"
+    if "chars" in options or "c" in options:
+        return "chars"
+
+    print("Select CLI mode:")
+    print("  1. Text system (--text)")
+    print("  2. Characters system (--chars)")
+    choice = input("Enter 1 or 2 [1]: ").strip()
+    return "chars" if choice == "2" else "text"
 
 
 def main() -> None:
-    """Run a sample combat session to verify refactored behavior."""
-    logger = Logger(enabled=True)
-    game = Game(logger=logger)
+    """Parse startup arguments and launch the selected CLI mode."""
+    _, options = CommandParser.parse_tokens(sys.argv[1:])
+    mode = choose_mode(options)
 
-    warrior = Character(
-        name="Arthas",
-        max_hp=120,
-        attack=20,
-        armor=15,
-        penetration=5,
-        energy=30,
-        logger=logger,
-    )
-    mage = Character(
-        name="Jaina",
-        max_hp=90,
-        attack=14,
-        armor=5,
-        penetration=10,
-        energy=40,
-        logger=logger,
-    )
+    registry = CommandRegistry()
+    if mode == "text":
+        factory = TextFactory(title="My Document")
+        register_text_commands(registry, factory)
+        app = CLIApp(registry, mode_name="Text")
+    else:
+        ctx = CharactersContext()
+        register_characters_commands(registry, ctx)
+        app = CLIApp(registry, mode_name="Characters")
 
-    slash = Ability(name="Heavy Cleave", power=15, cost=15)
-    frostbolt = Ability(name="Frostbolt", power=22, cost=20)
-
-    warrior.add_ability(slash)
-    mage.add_ability(frostbolt)
-
-    game.basic_attack(warrior, mage)
-    game.use_ability(mage, frostbolt, warrior)
-    game.use_ability(warrior, slash, mage)
-
-    print("\nFinal states:")
-    print(warrior)
-    print(mage)
+    app.run()
 
 
 if __name__ == "__main__":
