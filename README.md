@@ -152,6 +152,7 @@ classDiagram
     Container --> Container : _parent (0..1)
     TextFactory *-- Root : owns _root
     TextFactory --> Container : tracks _current
+```
 ---
 
 ## Практичне заняття 4. Практика SOLID
